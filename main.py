@@ -6,6 +6,10 @@ import re
 from datetime import datetime
 import mysql.connector
 
+def execute_insert(cursor, invoice_number, invoice_date, file_name, status):
+    sql = "INSERT INTO invoice_records (invoice_number, invoice_date, file_name, status) VALUES (%s, %s, %s, %s)"
+    cursor.execute(sql, (invoice_number, invoice_date, file_name, status))
+
 def main():
     # STARTUP
 
@@ -51,7 +55,7 @@ def main():
 
             # Regex
             inv_number_re_pattern = r"INVOICE #(\d+)"
-            inv_date_re_pattern = r"DATE: (\d{2}/\d{2}/\d{4})"
+            inv_date_re_pattern = r"DATE (\d{2}/\d{2}/\d{4})"
 
             # Procure o texto dentro do pdf baseado nessa instrucao regex
             match_number = re.search(inv_number_re_pattern, pdf_text)
@@ -72,12 +76,21 @@ def main():
             ws["C" + str(last_empty_line)] = file
             ws["D" + str(last_empty_line)] = "Completed"
 
+            execute_insert(cursor, match_number.group(1), match_date.group(1), file, "Completed")
+            db.commit()
+
             last_empty_line += 1
         except Exception as error:
             print(f"\nException: {error}\nResult: Could not build the excel file")
             ws["C" + str(last_empty_line)] = file
             ws["D" + str(last_empty_line)] = f"Exception: {error}"
+
+            execute_insert(cursor, "N/A", "N/A", file, "Exception : {}".format(error))
+            db.commit()
+
             last_empty_line += 1
+    cursor.close()
+    db.close()
 
     full_now = str(datetime.now()).replace(":", "-")
     dot_index = full_now.index(".")
