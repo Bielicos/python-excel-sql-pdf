@@ -1,0 +1,11 @@
+services:
+  mysql:
+    container_name: mysql
+    image: mysql:8.0
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: process_invoices
+      MYSQL_USER: user123
+      MYSQL_PASSWORD: password123
